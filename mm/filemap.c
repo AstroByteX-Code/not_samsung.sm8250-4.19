@@ -43,6 +43,9 @@
 #ifdef CONFIG_PAGE_BOOST_RECORDING
 #include <linux/io_record.h>
 #endif
+#ifdef CONFIG_HW_CGROUP_WORKINGSET
+#include <linux/workingset_cgroup.h>
+#endif
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/filemap.h>
@@ -2468,6 +2471,9 @@ out:
 	ra->prev_pos <<= PAGE_SHIFT;
 	ra->prev_pos |= prev_offset;
 
+#ifdef CONFIG_HW_CGROUP_WORKINGSET
+	workingset_pagecache_on_readfile(filp, ppos, index, offset);
+#endif
 	*ppos = ((loff_t)index << PAGE_SHIFT) + offset;
 	file_accessed(filp);
 	return written ? written : error;
@@ -2712,6 +2718,9 @@ vm_fault_t filemap_fault(struct vm_fault *vmf)
 	 * Do we have something in the page cache already?
 	 */
 	page = find_get_page(mapping, offset);
+#ifdef CONFIG_HW_CGROUP_WORKINGSET
+	workingset_pagecache_on_pagefault(file, offset);
+#endif
 	if (likely(page) && !(vmf->flags & FAULT_FLAG_TRIED)) {
 		/*
 		 * We found the page, so try async readahead before
