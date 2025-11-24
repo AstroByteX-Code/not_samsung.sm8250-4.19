@@ -799,6 +799,9 @@ struct task_struct {
 	refcount_t			usage;
 	/* Per task flags (PF_*), defined further below: */
 	unsigned int			flags;
+#ifdef CONFIG_HW_CGROUP_WORKINGSET
+	unsigned int                    ext_flags;
+#endif
 	unsigned int			ptrace;
 
 #ifdef CONFIG_SMP
@@ -1707,6 +1710,10 @@ extern struct pid *cad_pid;
 #define PF_FREEZER_SKIP		0x40000000	/* Freezer should not count it as freezable */
 #define PF_SUSPEND_TASK		0x80000000      /* This thread called freeze_processes() and should not be frozen */
 
+#ifdef CONFIG_HW_CGROUP_WORKINGSET
+#define PF_EXT_WSCG_MONITOR	0x00000001	/* I am in a workingset cgroup of monitor*/
+#define PF_EXT_WSCG_PREREAD	0x00000002	/* I am a thread preread workingset by myself */
+#endif
 /*
  * Only the _current_ task can read/write to tsk->flags, but other
  * tasks can access tsk->flags in readonly mode for example
