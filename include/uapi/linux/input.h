@@ -128,6 +128,7 @@
 #endif
 #define input_log_fix()	sec_tsp_log_fix()
 #else
+#if 0
 #define input_dbg(mode, dev, fmt, ...)						\
 ({										\
 	dev_dbg(dev, SECLOG fmt, ## __VA_ARGS__);				\
@@ -140,10 +141,15 @@
 ({										\
 	dev_err(dev, SECLOG fmt, ## __VA_ARGS__);				\
 })
+#endif
+#define input_dbg(mode, dev, fmt, ...)  do { } while (0)
+#define input_info(mode, dev, fmt, ...) do { } while (0)
+#define input_err(mode, dev, fmt, ...)  do { } while (0)
 #define input_raw_info(mode, dev, fmt, ...) input_info(mode, dev, fmt, ## __VA_ARGS__)
 #define input_log_fix()	{}
 #define input_raw_data_clear() {}
 #endif
+
 
 /*
  * The event structure itself
