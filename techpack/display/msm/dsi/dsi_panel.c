@@ -20,6 +20,8 @@
 #include "ss_dsi_panel_common.h"
 #endif
 
+#include <linux/state_notifier.h>
+
 /**
  * topology is currently defined by a set of following 3 values:
  * 1. num of layer mixers
@@ -554,6 +556,7 @@ error_disable_vregs:
 	(void)dsi_pwr_enable_regulator(&panel->power_info, false);
 
 exit:
+	state_resume();
 	return rc;
 }
 
@@ -628,6 +631,7 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 				panel->name, rc);
 #endif
 
+	state_suspend();
 	return rc;
 }
 
