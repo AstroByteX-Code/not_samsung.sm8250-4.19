@@ -297,3 +297,8 @@ obj-$(CONFIG_GENERIC_LIB_LSHRDI3) += lshrdi3.o
 obj-$(CONFIG_GENERIC_LIB_MULDI3) += muldi3.o
 obj-$(CONFIG_GENERIC_LIB_CMPDI2) += cmpdi2.o
 obj-$(CONFIG_GENERIC_LIB_UCMPDI2) += ucmpdi2.o
+
+# Minimal Huawei Secure C Library v2
+obj-y += securec_v2/strncpy_s.o \
+			      securec_v2/memcpy_s.o \
+			      securec_v2/memset_s.o
