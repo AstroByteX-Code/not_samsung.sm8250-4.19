@@ -872,7 +872,7 @@ typedef struct _deviceInfo {
 
 // #define ALS_DBG
 // #define ALS_INFO
-
+#if 0
 #ifndef ALS_dbg
 #ifdef ALS_DBG
 #define ALS_dbg(format, arg...)		\
@@ -899,6 +899,11 @@ typedef struct _deviceInfo {
 					}
 #endif
 #endif
+#endif
+
+#define ALS_dbg(format, arg...)         do { } while (0)
+#define ALS_err(format, arg...)         do { } while (0)
+#define ALS_info(format, arg...)        do { } while (0)
 
 enum {
 	DEBUG_REG_STATUS = 1,
