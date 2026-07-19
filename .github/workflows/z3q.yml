@@ -1,0 +1,17 @@
+name: Build for z3q
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-z3q:
+    uses: ./.github/workflows/build.yml
+    with:
+      device: z3q
+      device_name: Galaxy S20 Ultra 5G
+    secrets:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
