@@ -2958,7 +2958,7 @@ loop:
 static int tcs3407_eol_mode_handler(struct tcs3407_device_data *data)
 {
 	int i;
-	ams_deviceCtx_t *ctx = data->deviceCtx;
+	//ams_deviceCtx_t *ctx = data->deviceCtx;
 
 	switch (data->eol_state) {
 	case EOL_STATE_INIT:
