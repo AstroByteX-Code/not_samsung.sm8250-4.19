@@ -1240,7 +1240,7 @@ static int override_release(char __user *release, size_t len)
 	return ret;
 }
 
-#define FAKE_UNAME "5.15.190"
+#define FAKE_UNAME "5.10.241"
 
 #if 0
 // target fake uname's we'll hopefully use in the future.
