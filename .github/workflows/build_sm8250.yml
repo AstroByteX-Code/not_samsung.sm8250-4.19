@@ -1,0 +1,63 @@
+name: Build sm8250 Kernel
+
+on:
+  workflow_call:
+    inputs:
+      device:
+        type: string
+        required: true
+      device_name:
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-kernel:
+    runs-on: ubuntu-latest
+
+    env:
+      DEVICE: ${{ inputs.device }}
+      DEVICE_NAME: ${{ inputs.device_name }}
+
+    steps:
+      - name: Check Out
+        uses: actions/checkout@v3
+
+      - name: Set Timezone
+        uses: szenius/set-timezone@v1.2
+        with:
+          timezoneLinux: "Asia/Karachi"
+
+      - name: Setting up the environment
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y gcc-aarch64-linux-gnu ccache
+
+      - name: Set Build Start Time
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+      - name: Run build script
+        run: |
+          export DEVICE=${{ env.DEVICE }}
+          ./build.sh
+
+      - name: Set Build End Time
+        run: echo "END_TIME=$(date +%s)" >> $GITHUB_ENV
+
+      - name: Calculate Build Duration
+        run: |
+          duration=$((END_TIME - START_TIME))
+          minutes=$((duration / 60))
+          seconds=$((duration % 60))
+          echo "BUILD_DURATION=${minutes}m ${seconds}s" >> $GITHUB_ENV
+
+      - name: Debug ZIP
+        run: ls -lh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-${{ env.DEVICE_NAME }}
+          path: not-*.zip
