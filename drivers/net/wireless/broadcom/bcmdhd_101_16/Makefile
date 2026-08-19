@@ -1775,6 +1775,10 @@ ifeq ($(DRIVER_TYPE),y)
   DHDCFLAGS += -DBCM_USE_PLATFORM_STRLCPY
 endif
 
+# The kernel always builds lib/securec_v2/memcpy_s.o and memset_s.o (obj-y).
+# Prevent bcmstdlib_s.c from redefining those symbols to avoid LTO duplicate errors.
+DHDCFLAGS += -DBCM_USE_PLATFORM_SECUREC
+
 
 #############################
 # Platform dependent feature
