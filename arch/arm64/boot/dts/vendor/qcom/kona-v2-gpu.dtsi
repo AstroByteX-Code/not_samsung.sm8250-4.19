@@ -9,7 +9,7 @@
 		compatible = "operating-points-v2";
 
 		opp-840000000 {
-			opp-hz = /bits/ 64 <840000000>;
+			opp-hz = /bits/ 64 <845000000>;
 			opp-microvolt = <278>;
 		};
 		
@@ -75,7 +75,7 @@
 
 			qcom,gpu-pwrlevel@0 {
 				reg = <0>;
-				qcom,gpu-freq = <840000000>;
+				qcom,gpu-freq = <845000000>;
 				qcom,bus-freq-ddr7 = <11>;
 				qcom,bus-min-ddr7 = <11>;
 				qcom,bus-max-ddr7 = <11>;
