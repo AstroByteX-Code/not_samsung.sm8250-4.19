@@ -33,7 +33,7 @@ jobs:
       - name: Setting up the environment
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y gcc-aarch64-linux-gnu ccache linux-headers-4.19
+          sudo apt-get install -y gcc-aarch64-linux-gnu ccache
 
       - name: Set Build Start Time
         run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
