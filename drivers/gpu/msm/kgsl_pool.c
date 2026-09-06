@@ -298,7 +298,6 @@ int kgsl_pool_alloc_page(int *page_size, struct page **pages,
 	int order = get_order(*page_size);
 	int pool_idx;
 	size_t size = 0;
-	gfp_t gfp_mask = kgsl_gfp_mask(order);
 
 	if ((pages == NULL) || pages_len < (*page_size >> PAGE_SHIFT))
 		return -EINVAL;
@@ -349,10 +348,12 @@ int kgsl_pool_alloc_page(int *page_size, struct page **pages,
 		}
 
 #ifdef CONFIG_HUGEPAGE_POOL
-		if (order == HUGEPAGE_ORDER)
+		if (order == HUGEPAGE_ORDER) {
+			gfp_t gfp_mask = kgsl_gfp_mask(order);
+
 			page = alloc_zeroed_hugepage(gfp_mask, order, false,
 						     HPAGE_GPU);
-		else
+		} else
 			page = _kgsl_alloc_pages(order);
 #else
 		page = _kgsl_alloc_pages(order);
