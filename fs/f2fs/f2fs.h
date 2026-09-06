@@ -888,6 +888,19 @@ struct f2fs_inode_info {
 
 	unsigned int atomic_write_cnt;
 	loff_t original_i_size;		/* original i_size before atomic write */
+
+#ifdef CONFIG_F2FS_ML_BASED_STREAM_SEPARATION
+	__u32 mtime_cnt;
+	__u32 is_cache;
+	__u64 mtime_interval;
+	__u32 overwrite_cnt;
+	__u32 append_cnt;
+	__u64 write_chunk;
+	__u64 write_chunk_cnt;
+#ifdef CONFIG_F2FS_ML_STREAMID_FORCE_COLD
+	__u32 is_force_cold;
+#endif
+#endif
 };
 
 static inline void get_read_extent_info(struct extent_info *ext,
@@ -1176,6 +1189,7 @@ enum cp_reason_type {
 	CP_SPEC_LOG_NUM,
 	CP_RECOVER_DIR,
 	CP_XATTR_DIR,
+	NR_CP_REASON,
 };
 
 enum iostat_type {
@@ -1632,6 +1646,94 @@ struct decompress_io_ctx {
 #define MAX_COMPRESS_LOG_SIZE		8
 #define MAX_COMPRESS_WINDOW_SIZE(log_size)	((PAGE_SIZE) << (log_size))
 
+enum sec_stat_cp_type {
+	STAT_CP_ALL,
+	STAT_CP_BG,
+	STAT_CP_FSYNC,
+	NR_STAT_CP,
+};
+
+struct f2fs_sec_stat_info {
+	u64 gc_count[2];		/* FG_GC, BG_GC */
+	u64 gc_node_seg_count[2];
+	u64 gc_data_seg_count[2];
+	u64 gc_node_blk_count[2];
+	u64 gc_data_blk_count[2];
+	u64 gc_ttime[2];
+
+	u64 cp_cnt[NR_STAT_CP];		/* total, balance, fsync */
+	u64 cpr_cnt[NR_CP_REASON];	/* cp reason by fsync */
+	u64 cp_max_interval;		/* max checkpoint interval */
+	u64 alloc_seg_type[2];		/* LFS, SSR */
+	u64 alloc_blk_count[2];
+	atomic64_t inplace_count;	/* atomic */
+	u64 fsync_count;
+	u64 fsync_dirty_pages;
+	u64 hot_file_written_blocks;	/* db, db-journal, db-wal, db-shm */
+	u64 cold_file_written_blocks;
+	u64 warm_file_written_blocks;
+	u64 data_fua_written_blocks;
+	u64 node_fua_written_blocks;
+	u64 total_fua_written_blocks;
+
+	u64 max_inmem_pages;		/* get_pages(sbi, F2FS_INMEM_PAGES), unused (kernel 6.1) */
+	u64 drop_inmem_all;			/* unused (kernel 6.1) */
+	u64 drop_inmem_files;		/* unused (kernel 6.1 */
+	u64 kwritten_byte;
+	u32 fs_por_error;
+	u32 fs_error;
+	u32 max_undiscard_blks;		/* # of undiscard blocks */
+	bool userdata_mounted;
+};
+
+struct f2fs_sec_fsck_info {
+	u64 fsck_read_bytes;
+	u64 fsck_written_bytes;
+	u64 fsck_elapsed_time;
+	u32 fsck_exit_code;
+	u32 valid_node_count;
+	u32 valid_inode_count;
+};
+
+struct f2fs_sec_heimdallfs_stat {
+	u32 nr_pkgs;
+	u64 nr_pkg_blks;
+	u32 nr_comp_pkgs;
+	u64 nr_comp_pkg_blks;
+	u64 nr_comp_saved_blks;
+};
+
+#ifdef CONFIG_F2FS_SEC_BLOCK_OPERATIONS_DEBUG
+#define F2FS_SEC_BLKOPS_ENTRIES		10
+#define F2FS_SEC_BLKOPS_LOGGING_THR	5		// > 5 Secs -> logging
+enum sec_blkops_dbg_type {
+	F2FS_SEC_DBG_DENTS,
+	F2FS_SEC_DBG_IMETA,
+	F2FS_SEC_DBG_NODES,
+
+	NR_F2FS_SEC_DBG_ENTRY,
+};
+
+struct f2fs_sec_blkops_entry {
+	unsigned int nr_ops;
+	unsigned long long cumulative_jiffies;
+};
+
+struct f2fs_sec_blkops_dbg {
+	unsigned long long start_time;
+	unsigned long long end_time;
+	unsigned int entry_idx;
+	unsigned int step;
+	int ret_val;
+	struct f2fs_sec_blkops_entry entry[NR_F2FS_SEC_DBG_ENTRY];
+};
+#endif
+
+/* @fs.sec -- 6f73593218d3cc1e7f4dc5d927f0b2ac -- */
+#ifdef CONFIG_F2FS_ML_BASED_STREAM_SEPARATION
+#define STREAMID_PARAMS	11
+#endif
+
 struct f2fs_sb_info {
 	struct super_block *sb;			/* pointer to VFS super block */
 	struct proc_dir_entry *s_proc;		/* proc entry */
@@ -1890,6 +1992,37 @@ struct f2fs_sb_info {
 	/* For io latency related statistics info in one iostat period */
 	spinlock_t iostat_lat_lock;
 	struct iostat_lat_info *iostat_io_lat;
+#endif
+
+	unsigned int sec_hqm_preserve;
+	struct f2fs_sec_stat_info sec_stat;
+	struct f2fs_sec_fsck_info sec_fsck_stat;
+
+	struct f2fs_sec_heimdallfs_stat sec_heimdallfs_stat;
+
+	/* To gather information of fragmentation */
+	unsigned int s_sec_part_best_extents;
+	unsigned int s_sec_part_current_extents;
+	unsigned int s_sec_part_score;
+	unsigned int s_sec_defrag_writes_kb;
+	unsigned int s_sec_num_apps;
+	unsigned int s_sec_capacity_apps_kb;
+
+	unsigned int s_sec_cond_fua_mode;
+
+#ifdef CONFIG_F2FS_SEC_BLOCK_OPERATIONS_DEBUG
+	unsigned int s_sec_blkops_total;
+	unsigned long long s_sec_blkops_max_elapsed;
+	struct f2fs_sec_blkops_dbg s_sec_dbg_entries[F2FS_SEC_BLKOPS_ENTRIES];
+	struct f2fs_sec_blkops_dbg s_sec_dbg_max_entry;
+#endif
+
+#ifdef CONFIG_F2FS_ML_BASED_STREAM_SEPARATION
+	long long logistic_bias;
+	long long logistic_threshold;
+	long long logistic_scale[STREAMID_PARAMS];
+	int mp_uid;
+	int streamid_enable;
 #endif
 };
 
