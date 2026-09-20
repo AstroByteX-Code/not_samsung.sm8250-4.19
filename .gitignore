@@ -142,7 +142,6 @@ Android.bp
 
 # generated build files
 
-AnyKernel3/
 noKernel/
 out/
 tc/
