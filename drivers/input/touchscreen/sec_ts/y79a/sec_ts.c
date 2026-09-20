@@ -13,6 +13,7 @@
 struct sec_ts_data *tsp_info;
 
 #include "sec_ts.h"
+#include <linux/proc_fs.h>
 
 struct sec_ts_data *ts_dup;
 bool shutdown_is_on_going_tsp;
