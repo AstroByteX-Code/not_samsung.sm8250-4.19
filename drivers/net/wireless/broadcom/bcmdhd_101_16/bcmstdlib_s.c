@@ -100,6 +100,7 @@ exit:
 	return err;
 }
 
+#if !defined(BCM_USE_PLATFORM_SECUREC)
 /*
  * memcpy_s - secure memcpy
  * dest : pointer to the object to copy to
@@ -185,6 +186,7 @@ BCMPOSTTRAPFN(memset_s)(void *dest, size_t destsz, int c, size_t n)
 exit:
 	return err;
 }
+#endif /* !BCM_USE_PLATFORM_SECUREC */
 #endif /* !__STDC_WANT_SECURE_LIB__ && !(__STDC_LIB_EXT1__ && __STDC_WANT_LIB_EXT1__) */
 
 #if !defined(FREEBSD) && !defined(MACOSX) && !defined(BCM_USE_PLATFORM_STRLCPY)
