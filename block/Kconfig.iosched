@@ -5,7 +5,7 @@ menu "IO Schedulers"
 
 config MQ_IOSCHED_DEADLINE
 	tristate "MQ deadline I/O scheduler"
-	default n
+	default y
 	help
 	  MQ version of the deadline IO scheduler.
 
@@ -34,6 +34,7 @@ config MQ_IOSCHED_SSG_CGROUP
 
 config IOSCHED_BFQ
 	tristate "BFQ I/O scheduler"
+	default y
 	help
 	BFQ I/O scheduler for BLK-MQ. BFQ distributes the bandwidth of
 	of the device among all processes according to their weights,
