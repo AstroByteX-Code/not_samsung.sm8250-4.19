@@ -491,6 +491,7 @@ static int evdev_open(struct inode *inode, struct file *file)
 		return -ENOMEM;
 
 	client->bufsize = bufsize;
+	client->clk_type = INPUT_CLK_MONO;
 	spin_lock_init(&client->buffer_lock);
 	client->evdev = evdev;
 	evdev_attach_client(evdev, client);
