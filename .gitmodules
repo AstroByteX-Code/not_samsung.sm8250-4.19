@@ -7,3 +7,6 @@
 [submodule "KernelSU"]
 	path = KernelSU
 	url = https://github.com/backslashxx/KernelSU
+[submodule "mkbootimg"]
+	path = mkbootimg
+	url = https://android.googlesource.com/platform/system/tools/mkbootimg
