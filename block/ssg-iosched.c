@@ -43,7 +43,7 @@ extern void blk_sec_stats_account_io_done(
 
 static const int read_expire = HZ / 40;	/* max time before a read is submitted. */
 static const int write_expire = 2 * HZ;	/* ditto for writes, these limits are SOFT! */
-static const int max_write_starvation = 1;	/* max times reads can starve a write */
+static const int max_write_starvation = 4;	/* max times reads can starve a write */
 static const int congestion_threshold = 80;	/* percentage of congestion threshold */
 static const int max_tgroup_io_ratio = 50;	/* maximum service ratio for each thread group */
 static const int max_async_write_ratio = 10;	/* maximum service ratio for async write */
@@ -366,22 +366,17 @@ dispatch_writes:
 
 dispatch_find_request:
 	/*
-	 * we are not running a batch, find best request for selected data_dir
+	 * UFS is flash with its own command queue, sector order buys
+	 * nothing: reads always go oldest-first to bound per-request wait.
 	 */
-	next_rq = ssg_next_request(ssg, data_dir);
-	if (ssg_check_fifo(ssg, data_dir) || !next_rq) {
-		/*
-		 * A deadline has expired, the last request was in the other
-		 * direction, or we have run out of higher-sectored requests.
-		 * Start again from the request with the earliest expiry time.
-		 */
-		rq = ssg_fifo_request(ssg, data_dir);
+	if (data_dir == READ) {
+		rq = ssg_fifo_request(ssg, READ);
 	} else {
-		/*
-		 * The last req was the same dir and we have a next request in
-		 * sort order. No expired requests so continue on from here.
-		 */
-		rq = next_rq;
+		next_rq = ssg_next_request(ssg, data_dir);
+		if (ssg_check_fifo(ssg, data_dir) || !next_rq)
+			rq = ssg_fifo_request(ssg, data_dir);
+		else
+			rq = next_rq;
 	}
 
 	/*
