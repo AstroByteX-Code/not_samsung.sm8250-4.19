@@ -1,0 +1,64 @@
+name: Build Not Kernel  SM8250 
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        device: [x1q, y2q, z3q]
+
+    steps:
+      - name: Checkout kernel source
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential bc bison flex libssl-dev \
+            libncurses5-dev libncursesw5-dev \
+            python3 git zip curl jq zstd ccache \
+            gcc-aarch64-linux-gnu \
+            llvm lld 
+
+      - name: Set Timezone
+        uses: szenius/set-timezone@v1.2
+        with:
+          timezoneLinux: "Asia/Karachi"
+
+
+      - name: Record Start Time
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+        
+      - name: Run build_boot.sh
+        run: |
+          chmod +x build_boot.sh
+          ./build_boot.sh "${{ matrix.device }}" "clang-toolchain"
+
+      - name: Record End Time
+        run: echo "END_TIME=$(date +%s)" >> $GITHUB_ENV
+
+      - name: Calculate Build Duration
+        run: |
+          duration=$((END_TIME - START_TIME))
+          minutes=$((duration / 60))
+          seconds=$((duration % 60))
+          echo "BUILD_DURATION=${minutes}m ${seconds}s" >> $GITHUB_ENV
+
+      - name: Package artifacts
+        run: |
+          zip -r not-kernel-${{ matrix.device }}.zip \
+            boot.img \
+            out/${{ matrix.device }}/dtbo.img \
+            out/${{ matrix.device }}/dtb.img \
+            out/${{ matrix.device }}/arch/arm64/boot/Image
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: not-kernel-${{ matrix.device }}
+          path: not-kernel-${{ matrix.device }}.zip
+    
