@@ -955,9 +955,8 @@ static int sugov_init(struct cpufreq_policy *policy)
 	else if (policy->cpu == 4)
 	tunables->response_time_ms = 25;
 else
-	tunables->response_time_ms = sugov_calc_freq_response_ms(sg_policy);
-sugov_update_response_time_mult(sg_policy);
-	sugov_build_dvfs_headroom_lut(sg_policy);
+	(policy->cpu == 7)
+	tunables->response_time_ms = 30;
 
 	ret = kobject_init_and_add(&tunables->attr_set.kobj, &sugov_tunables_ktype,
 				   get_governor_parent_kobj(policy), "%s",
