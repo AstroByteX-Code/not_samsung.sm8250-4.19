@@ -366,17 +366,22 @@ dispatch_writes:
 
 dispatch_find_request:
 	/*
-	 * UFS is flash with its own command queue, sector order buys
-	 * nothing: reads always go oldest-first to bound per-request wait.
+	 * we are not running a batch, find best request for selected data_dir
 	 */
-	if (data_dir == READ) {
-		rq = ssg_fifo_request(ssg, READ);
+	next_rq = ssg_next_request(ssg, data_dir);
+	if (ssg_check_fifo(ssg, data_dir) || !next_rq) {
+		/*
+		 * A deadline has expired, the last request was in the other
+		 * direction, or we have run out of higher-sectored requests.
+		 * Start again from the request with the earliest expiry time.
+		 */
+		rq = ssg_fifo_request(ssg, data_dir);
 	} else {
-		next_rq = ssg_next_request(ssg, data_dir);
-		if (ssg_check_fifo(ssg, data_dir) || !next_rq)
-			rq = ssg_fifo_request(ssg, data_dir);
-		else
-			rq = next_rq;
+		/*
+		 * The last req was the same dir and we have a next request in
+		 * sort order. No expired requests so continue on from here.
+		 */
+		rq = next_rq;
 	}
 
 	/*
