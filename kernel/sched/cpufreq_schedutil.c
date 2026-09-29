@@ -418,56 +418,12 @@ unsigned long sugov_effective_cpu_perf(int cpu, unsigned long actual,
 	return max(min, max);
 }
 
-#define UCLAMP_DYNAMIC_BOOST_SHIFT	2
-#define UCLAMP_DYNAMIC_BOOST_MAX	256
-
-static inline unsigned long
-sugov_apply_uclamp_boost(struct sugov_cpu *sg_cpu, unsigned long util)
-{
-	struct rq *rq = cpu_rq(sg_cpu->cpu);
-	unsigned long uclamp_min;
-	unsigned long extra;
-
-	uclamp_min = uclamp_rq_get(rq, UCLAMP_MIN);
-
-	/*
-	 * No UCLAMP_MIN = no dynamic boost.
-	 *
-	 * Below UCLAMP_MIN, the clamp itself already guarantees
-	 * the requested minimum performance, so don't add more.
-	 */
-	if (!uclamp_min || util <= uclamp_min)
-		return util;
-
-	/*
-	 * Boost proportional to both real utilization and UCLAMP_MIN.
-	 *
-	 * SHIFT 2:
-	 *   uclamp_min 256  -> ~6.25% of util
-	 *   uclamp_min 512  -> ~12.5%
-	 *   uclamp_min 768  -> ~18.75%
-	 *   uclamp_min 1024 -> ~25%
-	 */
-	extra = (util * uclamp_min) >>
-		(SCHED_CAPACITY_SHIFT + UCLAMP_DYNAMIC_BOOST_SHIFT);
-
-	extra = min(extra, (unsigned long)UCLAMP_DYNAMIC_BOOST_MAX);
-
-	return min(util + extra, (unsigned long)SCHED_CAPACITY_SCALE);
-}
-
 static void sugov_get_util(struct sugov_cpu *sg_cpu, unsigned long boost)
 {
 	unsigned long min, max, util = cpu_util_cfs(cpu_rq(sg_cpu->cpu));
 
 	util = effective_cpu_util(sg_cpu->cpu, util, &min, &max);
-
-	/* UCLAMP-aware dynamic boost */
-	util = sugov_apply_uclamp_boost(sg_cpu, util);
-
-	/* Existing IO/wakeup boost */
 	util = max(util, boost);
-
 	sg_cpu->bw_min = min;
 	sg_cpu->util = sugov_effective_cpu_perf(sg_cpu->cpu, util, min, max);
 }
