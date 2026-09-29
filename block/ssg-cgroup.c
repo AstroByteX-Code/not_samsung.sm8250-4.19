@@ -135,9 +135,9 @@ static void ssg_blkcg_pd_online(struct blkg_policy_data *pd)
 		return;
 
 	if (!strcmp(path, "/top-app"))
-		ssg_blkcg->max_available_ratio = 80;
+		ssg_blkcg->max_available_ratio = 60;
 	else if (!strcmp(path, "/background"))
-		ssg_blkcg->max_available_ratio = 20;
+		ssg_blkcg->max_available_ratio = 15;
 	else
 		return;
 
