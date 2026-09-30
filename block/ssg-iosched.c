@@ -506,14 +506,15 @@ static unsigned int ssg_tgroup_shallow_depth(struct blk_mq_alloc_data *data)
 	if (unlikely(!ssg->rq_info))
 		return 0;
 
-	for (i = 0; i < nr_requests; i++)
-		if (tgid == ssg->rq_info[i].tgid)
-			tgroup_rqs++;
+	for (i = 0; i < nr_requests; i++) {
+		if (tgid != ssg->rq_info[i].tgid)
+			continue;
 
-	if (tgroup_rqs < ssg->max_tgroup_rqs)
-		return 0;
+		if (++tgroup_rqs >= ssg->max_tgroup_rqs)
+			return ssg->tgroup_shallow_depth;
+	}
 
-	return ssg->tgroup_shallow_depth;
+	return 0;
 }
 
 static void ssg_limit_depth(unsigned int op, struct blk_mq_alloc_data *data)
