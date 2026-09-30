@@ -66,7 +66,7 @@ static void ssg_blkcg_cpd_init(struct blkcg_policy_data *cpd)
 	if (!ssg_blkcg)
 		return;
 
-	ssg_blkcg->max_available_ratio = 10;
+	ssg_blkcg->max_available_ratio = 25;
 }
 
 static void ssg_blkcg_cpd_free(struct blkcg_policy_data *cpd)
