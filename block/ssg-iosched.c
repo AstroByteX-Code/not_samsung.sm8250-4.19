@@ -525,7 +525,10 @@ static void ssg_limit_depth(unsigned int op, struct blk_mq_alloc_data *data)
 	shallow_depth = min_not_zero(shallow_depth,
 			ssg_async_write_shallow_depth(op, data));
 
-	if (atomic_read(&ssg->allocated_rqs) > ssg->congestion_threshold_rqs)
+	if (unlikely(atomic_read(&ssg->allocated_rqs) >
+			ssg->congestion_threshold_rqs) &&
+	    (shallow_depth == 0 ||
+	     shallow_depth > ssg->tgroup_shallow_depth))
 		shallow_depth = min_not_zero(shallow_depth,
 				ssg_tgroup_shallow_depth(data));
 
