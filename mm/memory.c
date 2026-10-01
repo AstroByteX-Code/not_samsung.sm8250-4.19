@@ -3570,7 +3570,7 @@ static unsigned long fault_around_bytes __read_mostly =
 #ifndef __HAVE_ARCH_PTEP_SET_ACCESS_FLAGS
 	PAGE_SIZE;
 #else
-	rounddown_pow_of_two(65536);
+	rounddown_pow_of_two(262144);
 #endif
 
 #ifdef CONFIG_DEBUG_FS
