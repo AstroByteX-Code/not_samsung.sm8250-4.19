@@ -1,59 +1,60 @@
-name: Release builder
+name: Not Kernel Release Build
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       device:
+        description: "Target device codename (x1q, y2q, z3q, c1q, c2q)"
+        required: true
+        default: "y2q"
+      release:
+        description: "Upload release"
+        type: boolean
+        required: true
+        default: false
+      changelog:
+        description: "Changelog"
         type: string
-        required: true
-      device_name:
-        type: string
-        required: true
-      build:
-        type: string
-        required: true
-    secrets:
-      TELEGRAM_BOT_TOKEN:
-        required: true
-      TELEGRAM_CHAT_ID:
-        required: true
+        required: false
 
 permissions:
   contents: write
 
 jobs:
-  build-kernel:
-    runs-on: ubuntu-latest
-
-    env:
-      DEVICE: ${{ inputs.device }}
-      DEVICE_NAME: ${{ inputs.device_name }}
-      BUILD: ${{ inputs.build }}
-
+  build:
+    runs-on: ubuntu-24.04
     steps:
-      - name: Check Out
-        uses: actions/checkout@v3
+      # 1. Checkout repository with submodules (shallow clone)
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: true
+          fetch-depth: 1
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential bc bison flex libssl-dev \
+            libncurses5-dev libncursesw5-dev \
+            python3 git zip curl jq zstd ccache \
+            gcc-aarch64-linux-gnu \
+            llvm lld
 
       - name: Set Timezone
         uses: szenius/set-timezone@v1.2
         with:
-          timezoneLinux: "America/Sao_Paulo"
+          timezoneLinux: "Asia/Karachi"
 
-      - name: Setting up the environment
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-
-      - name: Set Build Start Time
+      - name: Record Start Time
         run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
 
-      - name: Run build script
+      - name: Run build_sm8250.sh
         run: |
-          export DEVICE=${{ env.DEVICE }}
-          export BUILD=${{ env.BUILD }}
-          ./build.sh
+          chmod +x build_sm8250.sh
+          ./build_sm8250.sh "${{ github.event.inputs.device }}" "clang-toolchain"
 
-      - name: Set Build End Time
+      - name: Record End Time
         run: echo "END_TIME=$(date +%s)" >> $GITHUB_ENV
 
       - name: Calculate Build Duration
@@ -63,83 +64,42 @@ jobs:
           seconds=$((duration % 60))
           echo "BUILD_DURATION=${minutes}m ${seconds}s" >> $GITHUB_ENV
 
-      - name: Upload to Telegram
+      - name: Generate release version
+        id: ts
         run: |
-          gitsha1=$(git rev-parse --short HEAD)
-          zip_file=$(ls not-*.zip 2>/dev/null | head -n 1)
-          if [ -z "$zip_file" ]; then
-            echo "No zip found!"
+          echo "RELEASE_TS=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+          : > version.txt
+          echo "**Kernel version:** $(cat out/include/config/kernel.release)  " >> version.txt
+          echo >> version.txt
+          export KHASH="$(git rev-parse HEAD)"
+          echo "**Kernel source:** [$KHASH](https://github.com/AstroByteX-Code/not_samsung.sm8250-4.19/tree/$KHASH)" >> version.txt
+
+          if [ "${{ github.event.inputs.release }}" = "true" ] && \
+             [ -n "${{ github.event.inputs.changelog }}" ]; then
+            echo >> version.txt
+            echo "**Changelog:**" >> version.txt
+            echo >> version.txt
+            printf "%b\n" "${{ github.event.inputs.changelog }}" >> version.txt
+          fi
+
+      - name: Find ZIP File
+        run: |
+          zip=$(ls not-*.zip 2>/dev/null | head -n1)
+          if [ -z "$zip" ]; then
+            echo "❌ No ZIP found!"
             exit 1
           fi
-          DEVICE_NAME_ESCAPED=$(echo "$DEVICE_NAME" | sed 's/[][_*()~`>#+=|{}.!-]/\\&/g')
-          DEVICE_ESCAPED=$(echo "$DEVICE" | sed 's/[][_*()~`>#+=|{}.!-]/\\&/g')
-          printf "| Localversion: `cat out/include/config/kernel.release`
-           | Build Date: `date +'%d %B %Y'`
-           | Build commit hash: $gitsha1
-           | KernelSU: yes
-           | SELinux: Enforcing" >> buildDetails.txt
-          buildDetails="`cat buildDetails.txt`"
-          msg="*not\\-kernel* $BUILD for the *${DEVICE_NAME_ESCAPED} \\(${DEVICE_ESCAPED}\\)*
-          * *
-          \`\`\`
-          $buildDetails
-          \`\`\`
-          *@not\\_kernel \\| @sKernelSU*
-          * * "
-          file="$zip_file"
-          curl -s -F document=@$file "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-          -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -F "disable_web_page_preview=true" \
-          -F "parse_mode=markdownv2" \
-          -F caption="$msg"
+          echo "zip_file=$zip" >> $GITHUB_ENV
+          echo "DEVICE_NAME=${{ github.event.inputs.device }}" >> $GITHUB_ENV
 
-      - name: Set ZIP File Path
-        run: |
-         zip=$(ls not-*.zip 2>/dev/null | head -n1)
-         if [ -z "$zip" ]; then
-           echo "❌ No ZIP found!"
-           exit 1
-         fi
-         echo "zip_file=$zip" >> $GITHUB_ENV
-
-      - name: Set release tag
-        run: echo "RELEASE_TAG=${DEVICE}-$(date +'%Y%m%d')" >> $GITHUB_ENV
-
-      - name: Prepare Release Info
-        run: |
-          set -e
-          echo "KERNEL_VERSION=$(cat out/include/config/kernel.release)" >> $GITHUB_ENV
-          echo "BUILD_DATE=$(date +'%d %B %Y')" >> $GITHUB_ENV
-          echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "CLANG_VERSION=$(${{ github.workspace }}/tc/clang/bin/clang --version | head -n1)" >> $GITHUB_ENV
-          KSU_VERSION=$(grep -m1 'KSU_VERSION' -r ./KernelSU/kernel/Makefile | sed -E 's/.*KSU_VERSION=([0-9]+).*/\1/')
-          [ -z "$KSU_VERSION" ] && KSU_VERSION="Unknown"
-          echo "KSU_VERSION=$KSU_VERSION" >> $GITHUB_ENV
-          git -C KernelSU fetch --tags 2>/dev/null || true
-          KSU_VERSION_STR=$(git -C KernelSU describe --tags --always 2>/dev/null)
-          [ -z "$KSU_VERSION_STR" ] && KSU_VERSION_STR="Unknown"
-          echo "KSU_VERSION_STR=$KSU_VERSION_STR" >> $GITHUB_ENV
-          SUSFS_VERSION=$(grep -m1 'SUSFS_VERSION' ./include/linux/susfs.h 2>/dev/null | awk -F'"' '{print $2}')
-          [ -z "$SUSFS_VERSION" ] && SUSFS_VERSION="Unknown"
-          echo "SUSFS_VERSION=$SUSFS_VERSION" >> $GITHUB_ENV
-
-      - name: Debug ZIP
-        run: ls -lh
-
-      - name: Create Release and Upload ZIP
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          name: not_kernel ${{ env.KERNEL_VERSION }} for ${{ env.DEVICE_NAME }}
-          files: ${{ env.zip_file }}
-          body: |
-             Clang version: ${{ env.CLANG_VERSION }}
-             Build Date: ${{ env.BUILD_DATE }}
-             KernelSU version: ${{ env.KSU_VERSION }} / ${{ env.KSU_VERSION_STR }}
-             SusFS version: ${{ env.SUSFS_VERSION }}
-             SELinux: Enforcing
-             Commit: ${{ env.COMMIT_HASH }}
-             Build completed in: ${{ env.BUILD_DURATION }}
-              
+      # 4. Upload the generated zip file
+      - name: Upload release assets
+        if: github.event.inputs.release == 'true'
+        uses: softprops/action-gh-release@v2.4.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          body_path: version.txt
+          tag_name: "${{ env.RELEASE_TS }}"
+          name: "Not-${{ github.event.inputs.device}}-${{ env.RELEASE_TS }}"
+          files: ${{ env.zip_file }}
