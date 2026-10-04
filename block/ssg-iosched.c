@@ -41,12 +41,12 @@ extern void blk_sec_stats_account_io_done(
 
 #define MAX_ASYNC_WRITE_RQS	8
 
-static const int read_expire = HZ / 40;	/* max time before a read is submitted. */
-static const int write_expire = 2 * HZ;	/* ditto for writes, these limits are SOFT! */
-static const int max_write_starvation = 4;	/* max times reads can starve a write */
-static const int congestion_threshold = 80;	/* percentage of congestion threshold */
+static const int read_expire = HZ / 2;		/* max time before a read is submitted. */
+static const int write_expire = 5 * HZ;		/* ditto for writes, these limits are SOFT! */
+static const int max_write_starvation = 2;	/* max times reads can starve a write */
+static const int congestion_threshold = 90;	/* percentage of congestion threshold */
 static const int max_tgroup_io_ratio = 50;	/* maximum service ratio for each thread group */
-static const int max_async_write_ratio = 10;	/* maximum service ratio for async write */
+static const int max_async_write_ratio = 25;	/* maximum service ratio for async write */
 
 struct ssg_request_info {
 	pid_t tgid;
