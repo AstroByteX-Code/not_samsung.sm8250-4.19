@@ -3,7 +3,7 @@
 SECONDS=0
 KERNEL_DIR=$(pwd)
 DEVICE="$1"
-TOOLCHAIN_DIR="$2"
+TC_DIR="$(pwd)/tc/clang"
 OUT_DIR="out/$DEVICE"
 AK3_DIR="$KERNEL_DIR/AnyKernel3"
 
@@ -29,14 +29,31 @@ DEFCONFIG="vendor/kona-perf_defconfig \
            
 git submodule update --init --recursive
 
+export PATH="$TC_DIR/bin:$PATH"
+
 # ===== Toolchain bootstrap =====
-if ! [ -d "$TOOLCHAIN_DIR" ]; then
+if ! [ -d "$TC_DIR" ]; then
     echo -e "${YELLOW}Clang not found! Downloading...${NC}"
-    mkdir -p "$TOOLCHAIN_DIR"
-    ASSET_URL=$(curl -fsSL https://api.github.com/repos/Neutron-Toolchains/clang-build-catalogue/releases/latest |
-                jq -r '.assets[] | select(.name | endswith(".tar.zst")) | .browser_download_url' | head -n1)
-    [ -z "$ASSET_URL" ] && echo -e "${RED}Failed to find toolchain release!${NC}" && exit 1
-    curl -L "$ASSET_URL" | tar --zstd -x -C "$TOOLCHAIN_DIR" --strip-components=1 || exit 1
+    mkdir -p "$TC_DIR"
+
+    ASSET_URL=$(
+        curl -fsSL https://api.github.com/repos/Neutron-Toolchains/clang-build-catalogue/releases/latest |
+        jq -r '.assets[]
+            | select(.name | endswith(".tar.zst"))
+            | .browser_download_url' |
+        head -n1
+    )
+
+    if [ -z "$ASSET_URL" ]; then
+        echo -e "${RED}Failed to find latest release!${NC}"
+        exit 1
+    fi
+
+    if ! curl -L "$ASSET_URL" | tar --zstd -x -C "$TC_DIR" --strip-components=1; then
+        echo -e "${RED}Download failed!${NC}"
+        exit 1
+    fi
+
     echo -e "${GREEN}Clang ready!${NC}"
 fi
 
