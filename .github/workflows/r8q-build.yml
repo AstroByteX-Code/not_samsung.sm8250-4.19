@@ -19,7 +19,7 @@ jobs:
       - name: Build Kernel
         run: |
           chmod +x build-local.sh
-          printf "r8q\nstock\n" | ./build-local.sh
+          printf "r8q\nksu\n" | ./build-local.sh
 
       - name: Upload Flashable ZIP
         uses: actions/upload-artifact@v4
