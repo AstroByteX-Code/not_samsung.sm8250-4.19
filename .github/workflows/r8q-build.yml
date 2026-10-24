@@ -15,8 +15,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc bison flex libssl-dev libelf-dev zip zstd jq
-
+          sudo apt-get install -y bc bison flex libssl-dev libelf-dev zip zstd jq gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
       - name: Build Kernel
         run: |
           chmod +x build-local.sh
