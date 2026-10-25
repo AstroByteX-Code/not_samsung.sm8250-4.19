@@ -6,23 +6,37 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_MAXSIZE: "2G"
+      CCACHE_HARDLINK: "true"
+      CCACHE_BASEDIR: "${{ github.workspace }}"
+
     steps:
       - name: Checkout Source
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      - name: Set up ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ runner.os }}-kernel-r8q
+
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc bison flex libssl-dev libelf-dev zip zstd jq gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+          sudo apt-get install -y bc bison flex libssl-dev libelf-dev zip zstd jq gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu ccache
+
       - name: Build Kernel
         run: |
           chmod +x build-local.sh
-          printf "r8q\nstock\n" | ./build-local.sh
+          export USE_CCACHE=1
+          printf "r8q\nksu\n" | ./build-local.sh
 
       - name: Upload Flashable ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: Kernel-r8q-ZIP
+          name: Kernel-r8q-KSU-OC
           path: "*.zip"
