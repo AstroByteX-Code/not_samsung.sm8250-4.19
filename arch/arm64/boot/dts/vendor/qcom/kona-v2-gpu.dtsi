@@ -9,7 +9,7 @@
 		compatible = "operating-points-v2";
                 opp-940000000 {
                         opp-hz = /bits/ 64 <940000000>;
-                        opp-microvolt = <390>;
+                        opp-microvolt = <400>;
                 };
 
                 opp-920000000 {
