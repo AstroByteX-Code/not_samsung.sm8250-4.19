@@ -200,3 +200,4 @@ cd ..
 
 echo -e "\n${GREEN}Completed in $((SECONDS / 60))m $((SECONDS % 60))s${NC}"
 echo -e "${GREEN}Zip: $ZIPNAME${NC}"
+
