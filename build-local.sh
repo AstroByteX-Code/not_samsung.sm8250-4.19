@@ -68,14 +68,14 @@ PROJECT_CONFIG="vendor/samsung/${MODEL}.config"
 
 [ -z "${PLATFORM_VERSION}" ] && export PLATFORM_VERSION=11
 
-ZIPNAME="$(date '+%Y%m%d').zip"
+ZIPNAME="ZenoKernel-v1.0.zip"
 PLATFORM_DEFCONFIG="vendor/kona-perf_defconfig"
 COMMON_DEFCONFIG="vendor/samsung/kona-sec-common.config"
 
 # Additionals configurations switch
 case "$add_choice" in
     stock)
-        ZIPNAME="ZenoKernel-$ZIPNAME"
+        ZIPNAME="ZenoKernel-stock-$ZIPNAME"
         EXTRA_CONFIG="vendor/not/localversion.config"
         ;;
     ksu)
@@ -186,7 +186,16 @@ echo -e "${GREEN}DTB + DTBO ready!${NC}"
 rm -rf AnyKernel3
 echo "[*] Cloning AnyKernel3..."
 git clone -q -b "$AK3_BRANCH" "$AK3_REPO" AnyKernel3 || exit 1
-sed -i "s/AnyKernel3/ZenoKernel/g" AnyKernel3/anykernel.sh
+    sed -i "s/AnyKernel3/ZenoKernel/g" AnyKernel3/anykernel.sh
+    sed -i "s/osm0sis/fenixistark/g" AnyKernel3/anykernel.sh
+    sed -i "/^# AnyKernel3/a ui_print \"  ==========================\"; ui_print \"  ZenoKernel v1.0 - Max Perf \"; ui_print \"  ==========================\";" AnyKernel3/anykernel.sh
+    sed -i "s/AnyKernel3/ZenoKernel/g" AnyKernel3/anykernel.sh
+
+    sed -i "s/osm0sis/fenixistark/g" AnyKernel3/anykernel.sh
+
+    sed -i "/^# AnyKernel3/a ui_print \"  ==========================\"; ui_print \"  ZenoKernel v1.0 - Max Perf \"; ui_print \"  ==========================\";" AnyKernel3/anykernel.sh
+sed -i "/ui_print " "/a ui_print "  ------------------------  "; 
+ui_print "  ZenoKernel v1.0 - Max Perf  "; 
 
 cp "$BOOT_DIR/dtbo.img" AnyKernel3/
 cp "$BOOT_DIR/Image.gz" AnyKernel3/
