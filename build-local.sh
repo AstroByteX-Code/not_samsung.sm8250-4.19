@@ -191,8 +191,6 @@ git clone -q -b "$AK3_BRANCH" "$AK3_REPO" AnyKernel3 || exit 1
     sed -i "/AnyKernel3/s/.*/ui_print \"  ZenoKernel v1.0 - Max Perf  \"/g" AnyKernel3/anykernel.sh
 
 
-sed -i "/ui_print " "/a ui_print "  ------------------------  "; 
-ui_print "  ZenoKernel v1.0 - Max Perf  "; 
 
 cp "$BOOT_DIR/dtbo.img" AnyKernel3/
 cp "$BOOT_DIR/Image.gz" AnyKernel3/
