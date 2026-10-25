@@ -8,8 +8,8 @@
 	gpu_opp_table_v2: gpu-opp-table_v2 {
 		compatible = "operating-points-v2";
 
-                opp-920000000 {
-                        opp-hz = /bits/ 64 <920000000>;
+                opp-910000000 {
+                        opp-hz = /bits/ 64 <910000000>;
                         opp-microvolt = <400>;
                 };
                 opp-880000000 {
@@ -76,7 +76,7 @@
                     qcom,initial-pwrlevel = <8>;
                     qcom,throttle-pwrlevel = <1>;
 
-                    qcom,gpu-pwrlevel@0 { reg = <0>; qcom,gpu-freq = <920000000>; qcom,bus-freq-ddr7 = <11>; qcom,bus-min-ddr7 = <11>; qcom,bus-max-ddr7 = <11>; qcom,bus-freq-ddr8 = <11>; qcom,bus-min-ddr8 = <11>; qcom,bus-max-ddr8 = <11>; qcom,acd-level = <0x802b5ffd>; };
+                    qcom,gpu-pwrlevel@0 { reg = <0>; qcom,gpu-freq = <910000000>; qcom,bus-freq-ddr7 = <11>; qcom,bus-min-ddr7 = <11>; qcom,bus-max-ddr7 = <11>; qcom,bus-freq-ddr8 = <11>; qcom,bus-min-ddr8 = <11>; qcom,bus-max-ddr8 = <11>; qcom,acd-level = <0x802b5ffd>; };
                     qcom,gpu-pwrlevel@1 { reg = <1>; qcom,gpu-freq = <880000000>; qcom,bus-freq-ddr7 = <11>; qcom,bus-min-ddr7 = <11>; qcom,bus-max-ddr7 = <11>; qcom,bus-freq-ddr8 = <11>; qcom,bus-min-ddr8 = <11>; qcom,bus-max-ddr8 = <11>; qcom,acd-level = <0x802b5ffd>; };
                     qcom,gpu-pwrlevel@2 { reg = <2>; qcom,gpu-freq = <670000000>; qcom,bus-freq-ddr7 = <11>; qcom,bus-min-ddr7 = <11>; qcom,bus-max-ddr7 = <11>; qcom,bus-freq-ddr8 = <11>; qcom,bus-min-ddr8 = <11>; qcom,bus-max-ddr8 = <11>; qcom,acd-level = <0x802b5ffd>; };
                     qcom,gpu-pwrlevel@3 { reg = <3>; qcom,gpu-freq = <587000000>; qcom,bus-freq-ddr7 = <10>; qcom,bus-min-ddr7 = <10>; qcom,bus-max-ddr7 = <11>; qcom,bus-freq-ddr8 = <10>; qcom,bus-min-ddr8 = <10>; qcom,bus-max-ddr8 = <11>; qcom,acd-level = <0x802b5ffd>; };
