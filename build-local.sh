@@ -75,15 +75,15 @@ COMMON_DEFCONFIG="vendor/samsung/kona-sec-common.config"
 # Additionals configurations switch
 case "$add_choice" in
     stock)
-        ZIPNAME="not-$ZIPNAME"
+        ZIPNAME="ZenoKernel-$ZIPNAME"
         EXTRA_CONFIG="vendor/not/localversion.config"
         ;;
     ksu)
-        ZIPNAME="not-ksu-$ZIPNAME"
+        ZIPNAME="ZenoKernel-ksu-$ZIPNAME"
         EXTRA_CONFIG="vendor/not/ksu.config vendor/not/localversion.config"
         ;;
     ksu)
-        ZIPNAME="not-ksu-permissive-$ZIPNAME"
+        ZIPNAME="ZenoKernel-ksu-permissive-$ZIPNAME"
         EXTRA_CONFIG="vendor/not/ksu.config vendor/not/localversion.config vendor/not/permissive.config"
         ;;
 esac
@@ -186,6 +186,7 @@ echo -e "${GREEN}DTB + DTBO ready!${NC}"
 rm -rf AnyKernel3
 echo "[*] Cloning AnyKernel3..."
 git clone -q -b "$AK3_BRANCH" "$AK3_REPO" AnyKernel3 || exit 1
+sed -i "s/AnyKernel3/ZenoKernel/g" AnyKernel3/anykernel.sh
 
 cp "$BOOT_DIR/dtbo.img" AnyKernel3/
 cp "$BOOT_DIR/Image.gz" AnyKernel3/
