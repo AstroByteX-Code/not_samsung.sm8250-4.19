@@ -28,6 +28,7 @@
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/input.h>
+#include <linux/cpumask.h>
 #include <linux/interrupt.h>
 #include <linux/serio.h>
 #include <linux/init.h>
@@ -2361,7 +2362,13 @@ int fts_irq_enable(struct fts_ts_info *info,
 			return retval;
 		}
 
-		info->irq_enabled = true;
+		/* ZenoKernel: Forca a IRQ do touch a rodar no Prime Core (CPU 7) */
+	irq_set_affinity_hint(info->irq, cpumask_of(7));
+
+	/* ZenoKernel: Prioridade maxima para a thread de toque */
+	set_user_nice(current, -20);
+
+	info->irq_enabled = true;
 	} else {
 		if (info->irq_enabled) {
 			fts_interrupt_set(info, INT_DISABLE);
