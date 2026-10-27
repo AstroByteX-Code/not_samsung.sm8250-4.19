@@ -86,7 +86,7 @@ jobs:
       - name: Ensure artifacts exist
         run: |
           test -f boot.img || (echo "boot.img missing" && exit 1)
-          test -f out/"${{ github.event.inputs.device }}"/dtbo.img || (echo "dtbo.img missing" && exit 1)
+          test -f out/${{ github.event.inputs.device }}/dtbo.img || (echo "dtbo.img missing" && exit 1)
 
       # 4. Upload the generated boot.img + dtbo.img
       - name: Upload release assets
@@ -100,4 +100,4 @@ jobs:
           name: "UN1CA-${{ github.event.inputs.device}}-${{ env.RELEASE_TS }}"
           files: |
             boot.img
-            out/"${{ github.event.inputs.device }}"/dtbo.img
+            out/${{ github.event.inputs.device }}/dtbo.img
