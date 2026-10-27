@@ -1,0 +1,103 @@
+name: Build Not kernel Binaries
+
+on:
+  workflow_dispatch:
+    inputs:
+      device:
+        description: "Target device codename (x1q, y2q, z3q)"
+        required: true
+        default: "y2q"
+      release:
+        description: "Upload release"
+        type: boolean
+        required: true
+        default: false
+      changelog:
+        description: "Changelog"
+        type: string
+        required: false
+
+permissions:
+  contents: write 
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      # 1. Checkout repository with submodules (shallow clone)
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: true
+          fetch-depth: 1
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential bc bison flex libssl-dev \
+            libncurses5-dev libncursesw5-dev \
+            python3 git zip curl jq zstd ccache \
+            gcc-aarch64-linux-gnu \
+            llvm lld
+
+      - name: Set Timezone
+        uses: szenius/set-timezone@v1.2
+        with:
+          timezoneLinux: "Asia/Karachi"
+
+      - name: Record Start Time
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+        
+      - name: Run build_boot.sh
+        run: |
+          chmod +x build_boot.sh
+          ./build_boot.sh "${{ github.event.inputs.device }}"
+
+      - name: Record End Time
+        run: echo "END_TIME=$(date +%s)" >> $GITHUB_ENV
+
+      - name: Calculate Build Duration
+        run: |
+          duration=$((END_TIME - START_TIME))
+          minutes=$((duration / 60))
+          seconds=$((duration % 60))
+          echo "BUILD_DURATION=${minutes}m ${seconds}s" >> $GITHUB_ENV     
+
+      - name: Generate release version
+        id: ts
+        run: |
+          echo "RELEASE_TS=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+          : > version.txt
+          echo "**Kernel version:** $(cat out/include/config/kernel.release)  " >> version.txt
+          echo >> version.txt
+          export KHASH="$(git rev-parse HEAD)"
+          echo "**Kernel source:** [$KHASH](https://github.com/AstroByteX-Code/not_samsung.sm8250-4.19/tree/$KHASH)" >> version.txt
+
+          if [ "${{ github.event.inputs.release }}" = "true" ] && \
+             [ -n "${{ github.event.inputs.changelog }}" ]; then
+            echo >> version.txt
+            echo "**Changelog:**" >> version.txt
+            echo >> version.txt
+            printf "%b\n" "${{ github.event.inputs.changelog }}" >> version.txt
+          fi
+
+      # 3. Ensure artifacts exist
+      - name: Ensure artifacts exist
+        run: |
+          test -f boot.img || (echo "boot.img missing" && exit 1)
+          test -f out/${{ github.event.inputs.device }}/dtbo.img || (echo "dtbo.img missing" && exit 1)
+
+      # 4. Upload the generated boot.img + dtbo.img
+      - name: Upload release assets
+        if: github.event.inputs.release
+        uses: softprops/action-gh-release@v2.4.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          body_path: version.txt
+          tag_name: "${{ env.RELEASE_TS }}"
+          name: "Not-${{ github.event.inputs.device}}-${{ env.RELEASE_TS }}"
+          files: |
+            boot.img
+            out/${{ github.event.inputs.device }}/dtbo.img
