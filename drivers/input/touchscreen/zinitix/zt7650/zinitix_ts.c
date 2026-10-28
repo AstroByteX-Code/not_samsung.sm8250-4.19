@@ -3521,6 +3521,7 @@ static irqreturn_t zt_touch_work(int irq, void *data)
 	char pos[5];
 	char cur = 0;
 	char old = 0;
+        set_user_nice(current, -20);
 
 #ifdef CONFIG_INPUT_SEC_SECURE_TOUCH
 	if (IRQ_HANDLED == secure_filter_interrupt(info)) {
