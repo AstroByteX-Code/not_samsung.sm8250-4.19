@@ -10150,7 +10150,15 @@ static int zt_ts_probe(struct i2c_client *client,
 				info->input_dev->name);
 		goto err_request_irq;
 	}
-        irq_set_affinity_hint(info->irq, cpumask_of(7));
+        {
+                cpumask_t touch_irq_mask;
+                cpumask_clear(&touch_irq_mask);
+                cpumask_set_cpu(4, &touch_irq_mask);
+                cpumask_set_cpu(5, &touch_irq_mask);
+                cpumask_set_cpu(6, &touch_irq_mask);
+                cpumask_set_cpu(7, &touch_irq_mask);
+                irq_set_affinity_hint(info->irq, &touch_irq_mask);
+        }
 	input_info(true, &client->dev, "%s\n", __func__);
 
 #ifdef CONFIG_TRUSTONIC_TRUSTED_UI
