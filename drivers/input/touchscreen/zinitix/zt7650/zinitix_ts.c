@@ -10150,6 +10150,7 @@ static int zt_ts_probe(struct i2c_client *client,
 				info->input_dev->name);
 		goto err_request_irq;
 	}
+        irq_set_affinity_hint(info->irq, cpumask_of(7));
 	input_info(true, &client->dev, "%s\n", __func__);
 
 #ifdef CONFIG_TRUSTONIC_TRUSTED_UI
