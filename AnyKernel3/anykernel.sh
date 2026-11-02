@@ -14,7 +14,7 @@ device.name2=y2q
 device.name3=z3q
 device.name4=c1q
 device.name5=c2q
-supported.versions=13 - 16
+supported.versions=14 - 17
 supported.patchlevels=
 '; }
 
@@ -64,6 +64,9 @@ if [ -n "$oneui" ]; then
         80000*)
             ui_print " • OneUI 8.x ROM Detected • "
             ;;
+        90000*)
+            ui_print " • OneUI 9.x ROM Detected • "
+            ;;    
         *)
             ui_print " • OneUI ROM Detected (version: $oneui) • "
             ;;
