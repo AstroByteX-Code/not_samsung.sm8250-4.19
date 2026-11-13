@@ -70,7 +70,6 @@
 #ifdef VL53L5_KERNEL_LOG
 
 uint32_t _trace_level     = VL53L5_TRACE_LEVEL_WARNING;
-static uint32_t _trace_modules   = VL53L5_TRACE_MODULE_ALL;
 static uint32_t _trace_functions = VL53L5_TRACE_FUNCTION_ALL;
 
 int8_t vl53l5_trace_config(
@@ -81,7 +80,7 @@ int8_t vl53l5_trace_config(
 {
 	int8_t status = 0;
 
-	_trace_modules   = modules;
+	(void)modules;
 	_trace_level     = level;
 	_trace_functions = functions;
 
@@ -90,7 +89,6 @@ int8_t vl53l5_trace_config(
 
 void vl53l5_trace_close(void)
 {
-	_trace_modules   = 0;
 	_trace_level     = 0;
 	_trace_functions = 0;
 }
