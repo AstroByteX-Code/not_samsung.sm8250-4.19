@@ -1,0 +1,16 @@
+name: Build Astral Kernle for x1q
+
+on:
+  push:
+    branches: [ "seventeen" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-x1q:
+    uses: ./.github/workflows/build_astral.yml
+    with:
+      device: x1q
+      device_name: Galaxy S20 5G 
