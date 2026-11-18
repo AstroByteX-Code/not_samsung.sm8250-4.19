@@ -1,0 +1,16 @@
+name: Build Astral Kernle for z3q
+
+on:
+  push:
+    branches: [ "seventeen" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-z3q:
+    uses: ./.github/workflows/build_astral.yml
+    with:
+      device: z3q
+      device_name: Galaxy S20 Ultra 5G 
