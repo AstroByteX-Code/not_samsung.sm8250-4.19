@@ -25,7 +25,8 @@ DEFCONFIG="vendor/kona-perf_defconfig \
            vendor/samsung/kona-sec-common.config \
            vendor/samsung/${DEVICE}.config \
            vendor/not/ksu.config \
-           vendor/not/localversion.config"
+           vendor/not/localversion.config \
+           vendor/not/droidspace.config"
            
 git submodule update --init --recursive
 
