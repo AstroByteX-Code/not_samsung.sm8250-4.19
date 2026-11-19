@@ -90,6 +90,21 @@ int ioprio_check_cap(int ioprio)
 	return 0;
 }
 
+#ifdef CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER
+extern bool susfs_is_priority_uid_filtered(uid_t uid);
+#endif
+
+static inline bool susfs_priority_task_filtered(struct task_struct *p)
+{
+#ifdef CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER
+	return current_uid().val >= 10000 &&
+	       !uid_eq(current_uid(), task_uid(p)) &&
+	       susfs_is_priority_uid_filtered(task_uid(p).val);
+#else
+	return false;
+#endif
+}
+
 SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
 {
 	struct task_struct *p, *g;
@@ -110,7 +125,7 @@ SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
 				p = current;
 			else
 				p = find_task_by_vpid(who);
-			if (p)
+			if (p && !susfs_priority_task_filtered(p))
 				ret = set_task_ioprio(p, ioprio);
 			break;
 		case IOPRIO_WHO_PGRP:
@@ -119,6 +134,8 @@ SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
 			else
 				pgrp = find_vpid(who);
 			do_each_pid_thread(pgrp, PIDTYPE_PGID, p) {
+				if (susfs_priority_task_filtered(p))
+					continue;
 				ret = set_task_ioprio(p, ioprio);
 				if (ret)
 					break;
@@ -128,10 +145,17 @@ SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
 			uid = make_kuid(current_user_ns(), who);
 			if (!uid_valid(uid))
 				break;
+
 			if (!who)
 				user = current_user();
-			else
+			else {
+#ifdef CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER
+				if (current_uid().val >= 10000 &&
+				    susfs_is_priority_uid_filtered(uid.val))
+					break;
+#endif
 				user = find_user(uid);
+			}
 
 			if (!user)
 				break;
@@ -198,7 +222,7 @@ SYSCALL_DEFINE2(ioprio_get, int, which, int, who)
 				p = current;
 			else
 				p = find_task_by_vpid(who);
-			if (p)
+			if (p && !susfs_priority_task_filtered(p))
 				ret = get_task_ioprio(p);
 			break;
 		case IOPRIO_WHO_PGRP:
@@ -208,6 +232,8 @@ SYSCALL_DEFINE2(ioprio_get, int, which, int, who)
 				pgrp = find_vpid(who);
 			read_lock(&tasklist_lock);
 			do_each_pid_thread(pgrp, PIDTYPE_PGID, p) {
+				if (susfs_priority_task_filtered(p))
+					continue;
 				tmpio = get_task_ioprio(p);
 				if (tmpio < 0)
 					continue;
@@ -217,14 +243,19 @@ SYSCALL_DEFINE2(ioprio_get, int, which, int, who)
 					ret = ioprio_best(ret, tmpio);
 			} while_each_pid_thread(pgrp, PIDTYPE_PGID, p);
 			read_unlock(&tasklist_lock);
-
 			break;
 		case IOPRIO_WHO_USER:
 			uid = make_kuid(current_user_ns(), who);
 			if (!who)
 				user = current_user();
-			else
+			else {
+#ifdef CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER
+				if (current_uid().val >= 10000 &&
+				    susfs_is_priority_uid_filtered(uid.val))
+					break;
+#endif
 				user = find_user(uid);
+			}
 
 			if (!user)
 				break;
