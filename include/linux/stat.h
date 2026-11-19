@@ -19,6 +19,10 @@
 #include <linux/time.h>
 #include <linux/uidgid.h>
 
+#ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
+#include <linux/susfs_def.h>
+#endif
+
 #define KSTAT_QUERY_FLAGS (AT_STATX_SYNC_TYPE)
 
 struct kstat {
