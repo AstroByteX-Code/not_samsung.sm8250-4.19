@@ -198,6 +198,21 @@ out:
 	return error;
 }
 
+#ifdef CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER
+extern bool susfs_is_priority_uid_filtered(uid_t uid);
+#endif // #ifdef CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER
+
+static inline bool susfs_priority_task_filtered(struct task_struct *p)
+{
+#ifdef CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER
+	return current_uid().val >= 10000 &&
+	       !uid_eq(current_uid(), task_uid(p)) &&
+	       susfs_is_priority_uid_filtered(task_uid(p).val);
+#else
+	return false;
+#endif
+}
+
 SYSCALL_DEFINE3(setpriority, int, which, int, who, int, niceval)
 {
 	struct task_struct *g, *p;
@@ -225,7 +240,7 @@ SYSCALL_DEFINE3(setpriority, int, which, int, who, int, niceval)
 			p = find_task_by_vpid(who);
 		else
 			p = current;
-		if (p)
+		if (p && !susfs_priority_task_filtered(p))
 			error = set_one_prio(p, niceval, error);
 		break;
 	case PRIO_PGRP:
@@ -234,6 +249,8 @@ SYSCALL_DEFINE3(setpriority, int, which, int, who, int, niceval)
 		else
 			pgrp = task_pgrp(current);
 		do_each_pid_thread(pgrp, PIDTYPE_PGID, p) {
+			if (susfs_priority_task_filtered(p))
+				continue;
 			error = set_one_prio(p, niceval, error);
 		} while_each_pid_thread(pgrp, PIDTYPE_PGID, p);
 		break;
@@ -243,6 +260,11 @@ SYSCALL_DEFINE3(setpriority, int, which, int, who, int, niceval)
 		if (!who)
 			uid = cred->uid;
 		else if (!uid_eq(uid, cred->uid)) {
+#ifdef CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER
+			if (cred->uid.val >= 10000 &&
+			    susfs_is_priority_uid_filtered(uid.val))
+				goto out_unlock;
+#endif // #ifdef CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER
 			user = find_user(uid);
 			if (!user)
 				goto out_unlock;	/* No processes for this user */
@@ -288,7 +310,7 @@ SYSCALL_DEFINE2(getpriority, int, which, int, who)
 			p = find_task_by_vpid(who);
 		else
 			p = current;
-		if (p) {
+		if (p && !susfs_priority_task_filtered(p)) {
 			niceval = nice_to_rlimit(task_nice(p));
 			if (niceval > retval)
 				retval = niceval;
@@ -300,6 +322,8 @@ SYSCALL_DEFINE2(getpriority, int, which, int, who)
 		else
 			pgrp = task_pgrp(current);
 		do_each_pid_thread(pgrp, PIDTYPE_PGID, p) {
+			if (susfs_priority_task_filtered(p))
+				continue;
 			niceval = nice_to_rlimit(task_nice(p));
 			if (niceval > retval)
 				retval = niceval;
@@ -311,6 +335,11 @@ SYSCALL_DEFINE2(getpriority, int, which, int, who)
 		if (!who)
 			uid = cred->uid;
 		else if (!uid_eq(uid, cred->uid)) {
+#ifdef CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER
+			if (cred->uid.val >= 10000 &&
+			    susfs_is_priority_uid_filtered(uid.val))
+				goto out_unlock;
+#endif // #ifdef CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER
 			user = find_user(uid);
 			if (!user)
 				goto out_unlock;	/* No processes for this user */
@@ -1262,6 +1291,11 @@ static __always_inline bool should_spoof_uname(const char *comm)
 }
 
 
+#ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
+extern struct static_key_false susfs_is_uname_spoof_buffer_set;
+extern void susfs_spoof_uname(struct new_utsname *tmp);
+#endif // #ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
+
 SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 {
 	struct new_utsname tmp;
@@ -1273,6 +1307,12 @@ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 		strscpy(tmp.release, FAKE_UNAME, sizeof(tmp.release));
 		pr_info("fake uname: %s (pid=%d) release=%s\n", current->comm, current->pid, tmp.release);
 	}
+
+#ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
+	if (static_branch_likely(&susfs_is_uname_spoof_buffer_set))
+		susfs_spoof_uname(&tmp);
+#endif // #ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
+
 	up_read(&uts_sem);
 	if (copy_to_user(name, &tmp, sizeof(tmp)))
 		return -EFAULT;
