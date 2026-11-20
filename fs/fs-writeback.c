@@ -545,13 +545,12 @@ static void inode_switch_wbs(struct inode *inode, int new_wb_id)
 	 * Let's continue after I_WB_SWITCH is guaranteed to be visible.
 	 */
 	call_rcu(&isw->rcu_head, inode_switch_wbs_rcu_fn);
-
 	rcu_read_unlock();
 
 	goto out_unlock;
 
 out_free:
-    rcu_read_unlock();
+	rcu_read_unlock();
 	atomic_dec(&isw_nr_in_flight);
 	if (isw->new_wb)
 		wb_put(isw->new_wb);
